@@ -4,6 +4,6 @@
 - Design Patterns and Programming Principles.
 
 - Explanation of the features introduced in the latest Java versions, 
-starting from the 8 or 1.8.
+starting from Java 8, released on 2014, but still widely used in 2022.
 
 
