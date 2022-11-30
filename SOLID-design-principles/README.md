@@ -1,3 +1,6 @@
+## The SOLID Principles
+
+There is a package for each principle with simple examples.
 
 ### Single Responsability Principle
 
