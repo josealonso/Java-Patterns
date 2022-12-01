@@ -1,3 +1,122 @@
+## [Java 9](https://www.oracle.com/java/technologies/javase/9all-relnotes.html)
+
+### **Most important changes**
+
+- **Modular System – Jigsaw Project**
+
+The JVM is modular, so it can run on devices with a lot less available memory. The JVM can run with only those modules and APIs which are required by the application. 
+
+The modules are going to be described in a file called *module-info.java* located in the top of java code hierarchy.
+
+- **A new HTTP Client**
+
+It supports both [**HTTP/2 protocol**](https://http2.github.io/) and **WebSocket** handshake, with performance that should be comparable with the Apache HttpClient, Netty and Jetty.
+The API uses the Builder pattern.
+
+```
+HttpRequest request = HttpRequest.newBuilder()
+  .uri(new URI("https://postman-echo.com/get"))
+  .GET()
+  .build();
+
+HttpResponse<String> response = HttpClient.newHttpClient()
+  .send(request, HttpResponse.BodyHandler.asString());
+```
+- **JShell Command Line Tool**
+
+JShell is read–eval–print loop – REPL for short.
+
+It's an interactive tool to evaluate declarations, statements, and expressions of Java, together with an API. It is very convenient for testing small code snippets, which otherwise require creating a new class with the main method.
+
+- **Improved *Process* API**
+
+The *current* method returns an object representing a process of currently running JVM. The *Info* subclass provides details about the process.
+
+```
+ProcessHandle self = ProcessHandle.current();
+long PID = self.getPid();
+ProcessHandle.Info procInfo = self.info();
+ 
+Optional<String[]> args = procInfo.arguments();
+Optional<String> cmd =  procInfo.commandLine();
+Optional<Instant> startTime = procInfo.startInstant();
+Optional<Duration> cpuUsage = procInfo.totalCpuDuration();
+```
+
+```
+// stop all the running child processes using destroy()
+
+childProc = ProcessHandle.current().children();
+childProc.forEach(procHandle -> {
+    assertTrue("Could not kill process " + procHandle.getPid(), procHandle.destroy());
+});
+```
+
+This is similar to Unix system calls.
+
+- **Immutable Factory methods**
+
+*java.util.List.of()* creates an immutable list of the given elements. In Java 8 creating a List of several elements would require several lines of code. Now we can do it as simple as:
+
+```
+List<String> usersList = List.of("Alice", Bob");
+usersList.add("John");       // compile error
+```
+
+- **Private methods in interfaces**
+
+Interfaces can have private methods, which can be used to split lengthy default methods:
+
+```
+interface InterfaceWithPrivateMethods {
+    
+    private static String staticPrivate() {
+        return "static private";
+    }
+    
+    private String instancePrivate() {
+        return "instance private";
+    }
+    
+    default void check() {
+        String result = staticPrivate();
+        InterfaceWithPrivateMethods pvt = new InterfaceWithPrivateMethods() {
+            // anonymous class
+        };
+        result = pvt.instancePrivate();
+    }
+}}
+```
+
+
+- **Enhanced *Completable Future* API**
+
+- **New methods in the `Optional` API**
+
+*java.util.Optional.stream()* allows to you use the power of Streams on Optional elements:
+
+```
+List<String> filteredList = listOfOptionals.stream()
+  .flatMap(Optional::stream)
+  .collect(Collectors.toList());
+```
+
+
+- **Variable Handles**
+
+The API resides under *java.lang.invoke* and consists of *VarHandle* and *MethodHandles*. It provides equivalents of *java.util.concurrent.atomic* and *sun.misc.Unsafe* operations upon object fields and array elements with similar performance.
+
+**With Java 9 Modular system access to sun.misc.Unsafe will not be possible from application code.**
+
+- **Publish-Subscribe Framework**
+
+The class *java.util.concurrent.Flow* provides interfaces that support the [Reactive Streams](http://www.reactive-streams.org/) publish-subscribe framework. These interfaces support interoperability across a number of asynchronous systems running on JVMs.
+
+We can use the utility class *SubmissionPublisher* to create custom components.
+
+- **Unified JVM Logging**
+
+============================================================
 
 ## [Java 10](https://www.oracle.com/java/technologies/javase/10all-relnotes.html)
 
@@ -63,7 +182,7 @@ P L U S
 
 **Improved Local Variable Type Inference**
 
-- Introduced in Java SE 10. In this release, it has been enhanced with support for allowing var to be used when declaring the formal parameters of implicitly typed lambda expressions.
+- Introduced in Java SE 10. In this release, it has been enhanced with support for **allowing *var* to be used when declaring the formal parameters of implicitly typed lambda expressions.**
 
 
 core-libs/java.net
