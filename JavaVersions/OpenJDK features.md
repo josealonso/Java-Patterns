@@ -120,7 +120,7 @@ We can use the utility class *SubmissionPublisher* to create custom components.
 
 ## [Java 10](https://www.oracle.com/java/technologies/javase/10all-relnotes.html)
 
-Java SE 10, was released on March 20, 2018.
+Java SE 10 was released on March 20, 2018.
 
 ### **Most important changes**
 
@@ -128,7 +128,7 @@ Java SE 10, was released on March 20, 2018.
 
 ```var list = new ArrayList<String>();    // infers ArrayList<String>```
 
-- *var* is a reserved type name, not a keyword, which means that existing code that uses var as a variable, method, or package name is not affected. However, code that uses var as a class or interface name is affected and the class or interface needs to be renamed.
+*var* is a reserved type name, not a keyword, which means that existing code that uses var as a variable, method, or package name is not affected. However, code that uses var as a class or interface name is affected and the class or interface needs to be renamed.
 
 - **Unmodifiable Collections**
 
@@ -240,24 +240,141 @@ Support for the feature release will last only for six months, i.e., until next 
 
 ## [Java 11](https://www.oracle.com/java/technologies/javase/11all-relnotes.html)
 
-### **Most important changes**
+- Oracle released Java 11 in September 2018.
+- **Java 11 is the first long-term support (LTS) release after Java 8.**
+- Starting with Java 11, there's no free long-term support (LTS) from Oracle. We have to use an Open JDK provider, being Oracle one of them. 
 
-**Improved Local Variable Type Inference**
+- **Improved Local Variable Type Inference**
 
-- Introduced in Java SE 10. In this release, it has been enhanced with support for **allowing *var* to be used when declaring the formal parameters of implicitly typed lambda expressions.**
+Feature enhanced with support for **allowing *var* to be used when declaring the formal parameters of implicitly typed lambda expressions.**
+
+We can use this feature to apply modifiers to our local variables, like defining a type annotation:
+
+```
+List<String> sampleList = Arrays.asList("Java", "Kotlin");
+String resultString = sampleList.stream()
+  .map((@Nonnull var x) -> x.toUpperCase())
+  .collect(Collectors.joining(", "));
+assertThat(resultString).isEqualTo("JAVA, KOTLIN");
+```
+
+- **Make HttpURLConnection Default Keep Alive Timeout Configurable**
+
+Two system properties have been added which control the keep alive behavior of HttpURLConnection in the case where the server does not specify a keep alive time. Two properties are defined for controlling connections to servers and proxies separately. They are `http.keepAlive.time.server` and `http.keepAlive.time.proxy ` respectively. 
+
+- **String API Additions**
+
+*isBlank, lines, strip, stripLeading, stripTrailing*, and *repeat*. 
+
+```
+String multilineString = "I want to be \n \n a Java guru \n in five years.";
+List<String> lines = multilineString.lines()
+  .filter(line -> !line.isBlank())
+  .map(String::strip)
+  .collect(Collectors.toList());
+assertThat(lines).containsExactly("I want to be", "a Java guru", "in five years.");
+```
+
+- **New File Methods**
+
+Using the **new readString and writeString static methods from the Files class:**
+
+```
+Path filePath = Files.writeString(Files.createTempFile(tempDir, "demo", ".txt"), "Sample text");
+String fileContent = Files.readString(filePath);
+assertThat(fileContent).isEqualTo("Sample text");
+```
+
+- **Collection to an Array**
+
+The java.util.Collection interface contains a new default toArray method which takes an IntFunction argument.
+
+This makes it easier to create an array of the right type from a collection:
+
+```
+List sampleList = Arrays.asList("Java", "Kotlin");
+String[] sampleArray = sampleList.toArray(String[]::new);
+assertThat(sampleArray).containsExactly("Java", "Kotlin");
+```
+
+- **The Not Predicate Method**
+
+A static not method has been added to the Predicate interface. We can use it to negate an existing predicate, much like the negate method:
+
+```
+List<String> sampleList = Arrays.asList("Java", "\n \n", "Kotlin", " ");
+List withoutBlanks = sampleList.stream()
+  .filter(Predicate.not(String::isBlank))
+  .collect(Collectors.toList());
+assertThat(withoutBlanks).containsExactly("Java", "Kotlin");
+```
+
+While not(isBlank) reads more naturally than isBlank.negate(), the big advantage is that **we can also use *not* with method references**, like not(String::isBlank).
+
+- **HTTP Client**
+
+The new HTTP client introduced in Java 9 has now become a standard feature in Java 11.
+
+```
+HttpClient httpClient = HttpClient.newBuilder()
+  .version(HttpClient.Version.HTTP_2)
+  .connectTimeout(Duration.ofSeconds(20))
+  .build();
+HttpRequest httpRequest = HttpRequest.newBuilder()
+  .GET()
+  .uri(URI.create("http://localhost:" + port))
+  .build();
+HttpResponse httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+assertThat(httpResponse.body()).isEqualTo("Hello from the server!");
+```
+
+- **Running Java Files**
+
+**we don't need to compile the Java source files with javac explicitly anymore:**
+
+```
+$ javac HelloWorld.java
+$ java HelloWorld 
+Hello Java 8!
+```
+
+We can directly run the file:
+
+```
+$ java HelloWorld.java
+Hello Java 11!
+```
+
+- **Performance Enhancements**
+
+- Dynamic Class-File Constants.
+- Improved Aarch64 Intrinsics.
+- A No-Op Garbage Collector.
+
+- Flight Recorder. 
+
+Java Flight Recorder (JFR) is now open-source in Open JDK, whereas it used to be a commercial product in Oracle JDK. JFR is a profiling tool that we can use to gather diagnostics and profiling data from a running Java application.
+
+To start a 120 seconds JFR recording, we can use the following parameter:
+
+```
+-XX:StartFlightRecording=duration=120s,settings=profile,filename=java-demo-app.jfr
+```
+
+We can use JFR in production since its performance overhead is usually below 1%. Once the time elapses, we can access the recorded data saved in a JFR file. However, in order to analyze and visualize the data, we need to use another tool called JDK Mission Control (JMC).
+
+- **Disable TLS 1.0 and 1.1**
+
+TLS 1.0 and 1.1 are versions of the TLS protocol that are no longer considered secure and have been superseded by more secure and modern versions (TLS 1.2 and 1.3).
+
+These versions have now been disabled by default. If you encounter issues, you can, at your own risk, re-enable the versions by removing "TLSv1" and/or "TLSv1.1" from the jdk.tls.disabledAlgorithms security property in the java.security configuration file.
 
 
-core-libs/java.net
-➜ **Make HttpURLConnection Default Keep Alive Timeout Configurable**
+- **CPU Shares Ignored When Computing Active Processor Count**
 
-- Two system properties have been added which control the keep alive behavior of HttpURLConnection in the case where the server does not specify a keep alive time. Two properties are defined for controlling connections to servers and proxies separately. They are `http.keepAlive.time.server` and `http.keepAlive.time.proxy ` respectively. 
+Previous JDK releases used an incorrect interpretation of the Linux cgroups parameter *cpu.shares*. This might cause the JVM to use fewer CPUs than available, leading to an under utilization of CPU resources when the JVM is used inside a container.
 
-hotspot/runtime
-➜ **CPU Shares Ignored When Computing Active Processor Count**
-
-- Previous JDK releases used an incorrect interpretation of the Linux cgroups parameter *cpu.shares*. This might cause the JVM to use fewer CPUs than available, leading to an under utilization of CPU resources when the JVM is used inside a container.
-
-- Starting from this JDK release, by default, the JVM no longer considers *cpu.shares* when deciding the number of threads to be used by the various thread pools. 
+Starting from this JDK release, by default, the JVM no longer considers *cpu.shares* when deciding the number of threads to be used by the various thread pools. 
 
 xml/jaxp
 ➜ **New XML Processing Limits**
@@ -285,20 +402,12 @@ or in the jaxp.properties file,
 
     `jdk.xml.xpathExprGrpLimit=20`
 
-security-libs/javax.net.ssl
-➜ **Disable TLS 1.0 and 1.1**
-
-TLS 1.0 and 1.1 are versions of the TLS protocol that are no longer considered secure and have been superseded by more secure and modern versions (TLS 1.2 and 1.3).
-
-These versions have now been disabled by default. If you encounter issues, you can, at your own risk, re-enable the versions by removing "TLSv1" and/or "TLSv1.1" from the jdk.tls.disabledAlgorithms security property in the java.security configuration file.
-
-core-libs/java.util:collections
 ➜ **Better Listing of Arrays**
 
 The preferred way to copy a collection is to use a *copy constructor.* For example, to copy a collection into a new ArrayList, one would write `new ArrayList<>(collection)`. In certain circumstances, an additional, temporary copy of the collection's contents might be made in order to improve robustness. If the collection being copied is exceptionally large, then the application should be (aware of/monitor) the significant resources required involved in making the copy.
 
-core-svc/java.lang.management
-➜ **OperatingSystemMXBean Methods Inside a Container Return Container Specific Data**
+- **OperatingSystemMXBean Methods Inside a Container Return Container Specific Data**
+
 When executing in a container, or other virtualized operating environment, the following OperatingSystemMXBean methods in this release return container specific information, if available. Otherwise, they return host specific data:
 
     getFreePhysicalMemorySize()
@@ -307,37 +416,20 @@ When executing in a container, or other virtualized operating environment, the f
     getTotalSwapSpaceSize()
     getSystemCpuLoad()
 
-security-libs/java.security
+- **Removed Modules**
 
-➜ **Added 4 Amazon Root CA Certificates**
-The following root certificates have been added to the cacerts truststore:
+- API for XML-Based Web Services (*java.xml.ws*)
+- Java Architecture for XML Binding (*java.xml.bind*)
+- JavaBeans Activation Framework (*java.activation*)
+- Common Annotations (*java.xml.ws.annotation*)
+- Common Object Request Broker Architecture (*java.corba*)
+- JavaTransaction API (*java.transaction*)
 
-+ Amazon
-  + amazonrootca1
-    DN: CN=Amazon Root CA 1, O=Amazon, C=US
+- JDK Mission Control (JMC). 
+- JavaFX modules.
 
-  + amazonrootca2
-    DN: CN=Amazon Root CA 2, O=Amazon, C=US
 
-  + amazonrootca3
-    DN: CN=Amazon Root CA 3, O=Amazon, C=US
 
-  + amazonrootca4
-    DN: CN=Amazon Root CA 4, O=Amazon, C=US
-
-core-libs/java.util
-➜ **Changed Properties.loadFromXML to Comply with Specification**
-
-- The implementation of the java.util.Properties.loadFromXML method has been changed to comply with its specification. Specifically, the underlying XML parser implementation now rejects non-compliant XML documents by throwing an InvalidPropertiesFormatException as specified by the loadFromXML method.
-
-The effect of the change is as follows:
-
-    Documents created by Properties.storeToXML: No change. Properties.loadFromXML will have no problem reading such files.
-
-    Documents not created by Properties.storeToXML: Any documents containing DTDs not in the format as specified in Properties.loadFromXML will be rejected. This means the DTD shall be exactly as follows (as generated by the Properties.storeToXML method):
-    ```
-    <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
-    ```
 
 
 
