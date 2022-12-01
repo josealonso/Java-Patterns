@@ -5,6 +5,8 @@ However, there are two newer Long-Term-Support (LTS) versions: Java 11 and Java 
 Spring 6.0 and Spring Boot 3.0 were just released. They require Java 17 or a higher version.
 So I think it's a good time to **upgrade to Java 17**, which has been around for over a year now, since September 2021. 
 
+**IMPORTANT** The folowing article is a copy from the article called [It’s time to move your applications to Java 17](https://blogs.oracle.com/javamagazine/post/its-time-to-move-your-applications-to-java-17-heres-why-and-heres-how), by [Johan Janssen](https://blogs.oracle.com/authors/johan-janssen)
+
 ### **On code migration**
 
 - Upgrading to Java 17 requires effort, especially if the goal is to truly leverage the new language features and functionality within the JVM.
@@ -86,15 +88,52 @@ public record Student(String firstName) {
 
 ### **More about Java deprecations and feature removals**
 
-Before upgrading the JDK, make sure your IDE, build tools, and dependencies are up to date. The Maven Versions Plugin and Gradle Versions Plugin show which dependencies you have and list the latest available version.
+- Before upgrading the JDK, make sure your IDE, build tools, and dependencies are up to date. The [Maven Versions Plugin](https://www.mojohaus.org/versions-maven-plugin/) and [Gradle Versions Plugin](https://github.com/ben-manes/gradle-versions-plugin) show which dependencies you have and list the latest available version.
 
-Be aware that these tools show only the new version for the artifacts you use—but sometimes the artifact names change, forks are made, or the code moves. For instance, JAXB was first available via javax.xml.bind:jaxb-api but changed to jakarta.xml.bind:jakarta.xml.bind-api after its transition to the Eclipse Foundation. To find such changes, you can use Jonathan Lermitage’s Old GroupIds Alerter plugin for Maven or his plugin for Gradle.
+- Be aware that these tools show only the new version for the artifacts you use, but sometimes the artifact names change, forks are made, or the code moves. For instance, JAXB was first available via javax.xml.bind:jaxb-api but changed to jakarta.xml.bind:jakarta.xml.bind-api after its transition to the Eclipse Foundation. To find such changes, you can use Jonathan Lermitage’s Old GroupIds Alerter plugin for [Maven](https://github.com/jonathanlermitage/oga-maven-plugin) or his plugin for [Gradle](https://github.com/jonathanlermitage/oga-gradle-plugin).
 
-JavaFX. Starting with Java 11, the platform no longer contains JavaFX as part of the specification, and most JDK builds have removed it. You can use the separate JavaFX build from Gluon or add the OpenJFX dependencies to your project.
+- **JavaFX.** Starting with Java 11, the platform no longer contains JavaFX as part of the specification, and most JDK builds have removed it. You can use the separate JavaFX build from [Gluon](https://gluonhq.com/products/javafx/) or add the [OpenJFX](https://mvnrepository.com/artifact/org.openjfx) dependencies to your project.
 
-Fonts. Once upon a time, the JDK contained a few fonts, but as of Java 11 they were removed. If you use, for instance, Apache POI (a Java API for Microsoft Office–compatible documents), you will need fonts. The operating system needs to supply the fonts, since they are no longer present in the JDK. However, on operating systems such as Alpine Linux, the fonts must be installed manually using the apt install fontconfig command. Depending on which fonts you use, extra packages might be required.
+- **Fonts.** If they are needed, the operating system needs to supply the fonts, since they are no longer present in the JDK. 
 
-Java Mission Control. This is a very useful tool for monitoring and profiling your application. I highly recommend looking into it. Java Mission Control was once included in the JDK, but now it’s available as a separate download under the new name: JDK Mission Control.
+- **Java Mission Control.** This is a very useful tool for monitoring and profiling your application. Java Mission Control was once included in the JDK, but now it’s available as a separate download under the new name: [JDK Mission Control](https://www.oracle.com/java/technologies/jdk-mission-control.html).
 
-Java EE. The biggest change in JDK 11 was the removal of Java EE modules. Java EE modules such as JAXB, mentioned earlier, are used by many applications. You should add the relevant dependencies now that these modules are no longer present in the JDK. Table 1 lists the various modules and their dependencies. Please note that both JAXB and JAX-WS require two dependencies: one for the API and one for the implementation. Another change is the naming convention now that Java EE is maintained by the Eclipse Foundation under the name Jakarta EE. Your package imports need to reflect this change, so for instance jakarta.xml.bind.* should be used instead of javax.xml.bind.*.
+- **Java EE.** The biggest change in JDK 11 was the removal of Java EE modules. Java EE modules such as JAXB are used by many applications. You should add the relevant dependencies now that these modules are no longer present in the JDK. Table 1 lists the various modules and their dependencies. Please note that **both JAXB and JAX-WS require two dependencies: one for the API and one for the implementation.** Another change is the naming convention now that Java EE is maintained by the Eclipse Foundation under the name [Jakarta EE](https://jakarta.ee/). Your package imports need to reflect this change, so for instance **jakarta.xml.bind.* should be used instead of javax.xml.bind.\***.
+
+- **CORBA.** There is no official replacement for Java’s CORBA module, which was removed in Java 11. However, [Oracle GlassFish Server](https://www.oracle.com/middleware/technologies/glassfish-server.html) includes an implementation of CORBA.
+
+- **Nashorn.** Java 15 removed the Nashorn JavaScript engine. You can use the [nashorn-core](https://mvnrepository.com/artifact/org.openjdk.nashorn/nashorn-core) dependency if you still want to use the engine.
+
+- **Experimental compilers.** Java 17 removes support for GraalVM’s experimental ahead-of-time (AOT) and just-in-time (JIT) compiler, as explained in the documentation for [JEP 410](https://openjdk.java.net/jeps/410).
+
+### **Look out for unsupported major files**
+
+- You might see the error `Unsupported class file major version 61`. That happens with the [JaCoCo code coverage library](https://www.eclemma.org/jacoco/) and various other Maven plugins. The major version 61 part of the message refers to Java 17. So in this case, it means that the version of the used framework or tool doesn’t support Java 17. Therefore, you should upgrade the framework or tool to a new version. (If you see a message that contains major version 60, it relates to Java 16.)
+
+### **Encapsulated JDK internal APIs**
+
+- Java 16 and Java 17 encapsulate JDK internal APIs, which impacts various frameworks such as Lombok. You might see errors such as `module jdk.compiler does not export com.sun.tools.javac.processing` to unnamed module, which means your application no longer has access to that part of the JDK.
+
+- It's recommend upgrading all dependencies that use those internals and making sure your own code no longer uses them.
+
+### Java upgrades resource
+
+- The [JavaUpgrades GitHub repository](https://github.com/johanjanssen/javaupgrades) contains examples, common errors, and solutions that can help you during the upgrade process.
+
+### Conclusion
+
+- Upgrading your dependencies and adding dependencies for removed JDK features solves many of the Java upgrade challenges. I recommend a structured approach to upgrading step by step: First, make sure the code compiles, then run your tests, and then run the application.
+
+- In general, **the upgrade from JDK 11 to JDK 17 is a lot easier than the upgrade from JDK 8 to JDK 11.** However, in both scenarios, it was a matter of hours to days for nontrivial applications, and that was mainly due to waiting for builds to complete.
+
+
+
+
+
+
+
+
+
+
+
 
