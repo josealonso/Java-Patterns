@@ -120,46 +120,98 @@ We can use the utility class *SubmissionPublisher* to create custom components.
 
 ## [Java 10](https://www.oracle.com/java/technologies/javase/10all-relnotes.html)
 
+Java SE 10, was released on March 20, 2018.
+
 ### **Most important changes**
 
-**Local Variable Type Inference**
+- **Local Variable Type Inference**
 
 ```var list = new ArrayList<String>();    // infers ArrayList<String>```
 
 - *var* is a reserved type name, not a keyword, which means that existing code that uses var as a variable, method, or package name is not affected. However, code that uses var as a class or interface name is affected and the class or interface needs to be renamed.
 
-core-libs/java.util
-➜ **Optional.orElseThrow() Method**
+- **Unmodifiable Collections**
 
-- A new method `orElseThrow` has been added to the `Optional` class. It is synonymous with and is now the preferred alternative to the existing `get` method.
+*copyOf()* and *toUnmodifiable*
 
-core-libs/java.util:collections
-➜ **APIs for Creating Unmodifiable Collections**
+```
+// copyOf() returns the unmodifiable copy of the given Collection
 
-- Several new APIs have been added that facilitate the creation of unmodifiable collections. The `List.copyOf, Set.copyOf`, and `Map.copyOf` methods create new collection instances from existing instances. New methods `toUnmodifiableList, toUnmodifiableSet`, and `toUnmodifiableMap` have been added to the `Collectors` class in the Stream package. These allow the elements of a Stream to be collected into an unmodifiable collection.
+@Test(expected = UnsupportedOperationException.class)
+public void whenModifyCopyOfList_thenThrowsException() {
+    List<Integer> copyList = List.copyOf(integersList);
+    copyList.add(4);
+}
+```
 
-core-svc/javax.management
-➜ **Hashed Passwords for Out-of-the-Box JMX Agent**
+```
+// java.util.stream.Collectors get additional methods to collect a Stream into an unmodifiable List, Map or Set
 
-- The clear passwords present in the `jmxremote.password` file are now being over-written with their SHA3-512 hash by the JMX agent. 
+@Test(expected = UnsupportedOperationException.class)
+public void whenModifyToUnmodifiableList_thenThrowsException() {
+    List<Integer> evenList = someIntList.stream()
+      .filter(i -> i % 2 == 0)
+      .collect(Collectors.toUnmodifiableList());
+    evenList.add(4);
+}
+```
 
-hotspot/gc
-➜ **JEP 307 Parallel Full GC for G1**
+- **Optional.orElseThrow() Method**
 
-- Improves G1 worst-case latencies by making the full GC parallel. The G1 garbage collector is designed to avoid full collections, but when the concurrent collections can't reclaim memory fast enough a fall back full GC will occur. The old implementation of the full GC for G1 used a single threaded mark-sweep-compact algorithm. With JEP 307 the full GC has been parallelized and now use the same amount of parallel worker threads as the young and mixed collections.
+A new method `orElseThrow` has been added to the `Optional` class. It is synonymous with and **is now the preferred alternative to the existing get() method.**
 
-security-libs/java.security
-➜ **JEP 319 Root Certificates**
+```
+@Test
+public void whenListContainsInteger_OrElseThrowReturnsInteger() {
+    Integer firstEven = someIntList.stream()
+      .filter(i -> i % 2 == 0)
+      .findFirst()
+      .orElseThrow();
+    is(firstEven).equals(Integer.valueOf(2));
+}
+```
 
-- Provides a default set of root Certification Authority (CA) certificates in the JDK.
+- **Performance Improvements**
 
-security-libs/javax.net.ssl
-➜ **TLS Session Hash and Extended Master Secret Extension Support**
+- **Container Awareness**
 
-- Support has been added for the TLS session hash and extended master secret extension (RFC 7627) in JDK JSSE provider. 
+**JVMs are now aware of being run in a Docker container** and will extract container-specific configuration instead of querying the operating system itself.
 
-tools/javac
-➜ **Bytecode Generation for Enhanced for Loop**
+This support is **only** available for **Linux-based platforms**. This new support is enabled by default and can be disabled in the command line with the JVM option:
+
+`-XX:-UseContainerSupport`
+
+Also, this change adds a JVM option that provides the ability to specify the number of CPUs that the JVM will use:
+
+```
+-XX:ActiveProcessorCount=count
+```
+
+Three new JVM options have been added for Docker container users to control the amount of system memory that will be used for the Java Heap:
+
+```
+-XX:InitialRAMPercentage
+-XX:MaxRAMPercentage
+-XX:MinRAMPercentage
+```
+
+- **Root Certificates**
+
+The *cacerts* keystore, which was initially empty so far, is intended to contain a set of root certificates that can be used to establish trust in the certificate chains used by various security protocols.
+
+As a result, critical security components such as TLS didn't work by default under OpenJDK builds.
+
+**With Java 10, Oracle has open-sourced the root certificates** in Oracle's Java SE Root CA program in order to make OpenJDK builds more attractive to developers and to reduce the differences between those builds and Oracle JDK builds.
+
+- **Hashed Passwords for Out-of-the-Box JMX Agent**
+
+The clear passwords present in the `jmxremote.password` file are now being over-written with their SHA3-512 hash by the JMX agent. 
+
+- **Improved Garbage Collector**
+
+Improves G1 worst-case latencies by making the full GC parallel. The G1 garbage collector is designed to avoid full collections, but when the concurrent collections can't reclaim memory fast enough a fall back full GC will occur. The old implementation of the full GC for G1 used a single threaded mark-sweep-compact algorithm. With JEP 307 **the full GC has been parallelized** and now use the same amount of parallel worker threads as the young and mixed collections.
+
+- **Bytecode Generation for Enhanced for Loop**
 
 - Bytecode generation has been improved for enhanced for loops, providing an improvement in the translation approach for them. For example:
 
@@ -174,7 +226,17 @@ The following is the code generated after the enhancement:
 
 P L U S 
 
-- A number of removals.
+- **A number of removals**
+
+- **Time-Based Release Versioning**
+
+Starting with Java 10, Oracle has moved to the time-based release of Java. This has following implications:
+
+A new Java release every six months. The March 2018 release is JDK 10, the September 2018 release is JDK 11, and so forth. These are called feature releases and are expected to contain at least one or two significant features.
+Support for the feature release will last only for six months, i.e., until next feature release.
+**LTS releases will be supported for for three years.**
+
+=======================================================================
 
 ## [Java 11](https://www.oracle.com/java/technologies/javase/11all-relnotes.html)
 
